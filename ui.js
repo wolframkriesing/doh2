@@ -24,7 +24,7 @@ doh.ui = {
 	},
 
 	testFailed:function(group, test, error){
-		console.log(test.name + " FAILED, " + error);
+		console.log(test.name + " FAILED, " + error.message);
 	},
 
 	testFinished:function(group, test, success){

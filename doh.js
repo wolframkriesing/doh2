@@ -53,8 +53,7 @@ doh = {
 		}
 		for (var i=0, l=tests.length, t; i<l; i++){
 			t = {};
-			doh.mixin(t, tests[i]);
-			//t.test = doh.hitch(this, "_makeDeferred", [t.test]);
+			doh.util.mixin(t, tests[i]);
 			group.tests.push(t);
 		}
 		this._numTests += tests.length;
@@ -91,13 +90,13 @@ doh = {
 					return;
 				}
 				try{
-					var ret = doh[method].apply(doh, args);
+					var ret = doh.assert[method].apply(doh, args);
 					d.callback(ret || true);
 				}catch(e){
 					d.errback(e);
 				}
 			};
-			for (var methodName in doh){
+			for (var methodName in doh.assert){
 				if (methodName.indexOf("assert")===0){
 					this[methodName] = (function(methodName){return function(){
 						this._assertClosure(methodName, arguments);
@@ -118,7 +117,7 @@ doh = {
 			if (c.groupIndex < this._groups.length-1){
 				c.groupIndex++;
 				c.group = this._groups[c.groupIndex];
-				doh.mixin(c.group, this._additionalGroupProperties);
+				doh.util.mixin(c.group, this._additionalGroupProperties);
 				this.ui.groupStarted(c.group);
 				c.testIndex = 0;
 			} else {
@@ -165,9 +164,15 @@ doh = {
 		deferred.test = t;
 		
 		deferred.addErrback(function(err){
-			g.numFailures++;
-			doh._numFailures++;
-			doh.ui.testFailed(g, t, err);
+			if (err instanceof doh.assert.Failure){
+				g.numFailures++;
+				doh._numFailures++;
+				doh.ui.testFailure(g, t, err);
+			} else {
+				g.numErrors++;
+				doh._numErrors++;
+				doh.ui.testError(g, t, err);
+			}
 		});
 	
 		var retEnd = function(){
@@ -189,7 +194,7 @@ doh = {
 			deferred.errback(new Error("test timeout in " + t.name.toString()));
 		}, t.timeout || doh._defaultTimeout);
 	
-		deferred.addBoth(doh.hitch(this, function(arg){
+		deferred.addBoth(doh.util.hitch(this, function(arg){
 			// Copy over the result if an asynchronous test has writte a result.
 			// It must be available through the test object.
 // TODO maybe copy over all additional properties, compare to which props assertWrapperObject had upon creation and what new ones had been added, pass them all to t.*
@@ -199,7 +204,7 @@ doh = {
 			clearTimeout(timer);
 			retEnd();
 			this._testInFlight = false;
-			setTimeout(doh.hitch(this, "_runNextTest"), 1);
+			setTimeout(doh.util.hitch(this, "_runNextTest"), 1);
 		}));
 		this._testInFlight = true;
 

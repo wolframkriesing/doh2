@@ -8,13 +8,13 @@ doh.Deferred = function(canceller){
 	this.silentlyCancelled = false;
 };
 
-doh.extend(doh.Deferred, {
+doh.util.extend(doh.Deferred, {
 	getTestErrback: function(cb, scope){
 		// summary: Replaces outer getTextCallback's in nested situations to avoid multiple callback(true)'s
 		var _this = this;
 		return function(){
 			try{
-				cb.apply(scope||doh.global||_this, arguments);
+				cb.apply(scope||doh.util.global||_this, arguments);
 			}catch(e){
 				_this.errback(e);
 			}
@@ -25,7 +25,7 @@ doh.extend(doh.Deferred, {
 		var _this = this;
 		return function(){
 			try{
-				cb.apply(scope||doh.global||_this, arguments);
+				cb.apply(scope||doh.util.global||_this, arguments);
 			}catch(e){
 				_this.errback(e);
 				return;
@@ -40,10 +40,10 @@ doh.extend(doh.Deferred, {
 			if(typeof a[0] == "function"){
 				return a[0];
 			}else if(typeof a[0] == "string"){
-				return doh.global[a[0]];
+				return doh.util.global[a[0]];
 			}
 		}else if((a[0])&&(a[1])){
-			return doh.hitch(a[0], a[1]);
+			return doh.util.hitch(a[0], a[1]);
 		}
 		return null;
 	},
@@ -124,7 +124,7 @@ doh.extend(doh.Deferred, {
 	addBoth: function(cb, cbfn){
 		var enclosed = this.getFunctionFromArgs(cb, cbfn);
 		if(arguments.length > 2){
-			enclosed = doh.hitch(null, enclosed, arguments, 2);
+			enclosed = doh.util.hitch(null, enclosed, arguments, 2);
 		}
 		return this.addCallbacks(enclosed, enclosed);
 	},
@@ -132,7 +132,7 @@ doh.extend(doh.Deferred, {
 	addCallback: function(cb, cbfn){
 		var enclosed = this.getFunctionFromArgs(cb, cbfn);
 		if(arguments.length > 2){
-			enclosed = doh.hitch(null, enclosed, arguments, 2);
+			enclosed = doh.util.hitch(null, enclosed, arguments, 2);
 		}
 		return this.addCallbacks(enclosed, null);
 	},
@@ -140,7 +140,7 @@ doh.extend(doh.Deferred, {
 	addErrback: function(cb, cbfn){
 		var enclosed = this.getFunctionFromArgs(cb, cbfn);
 		if(arguments.length > 2){
-			enclosed = doh.hitch(null, enclosed, arguments, 2);
+			enclosed = doh.util.hitch(null, enclosed, arguments, 2);
 		}
 		return this.addCallbacks(null, enclosed);
 	},

@@ -49,9 +49,20 @@ doh.register("Synchronously written tests.",
 				t.assertEqual(1, "2");
 			}
 		},{
-			name:"success: assertFalse numbers",
+			name:"success: assertEqual numbers",
 			test:function(t){
 				t.assertEqual(1, "1");
+			}
+		},
+		{
+			name:"fail: assertEqual arrays",
+			test:function(t){
+				t.assertEqual([1,2], [2,1]);
+			}
+		},{
+			name:"success: assertEqual arrays",
+			test:function(t){
+				t.assertEqual([2,3], [2,3]);
 			}
 		},
 		
@@ -65,12 +76,12 @@ doh.register("Synchronously written tests.",
 		
 		{
 			// A missing assert call.
-			name:"fail: timeout, assert() missing",
+			name:"error: timeout, assert() missing",
 			test:function(t){
 			}
 		},{
 			// This test will fail, because it has no implementation of the test method.
-			name:"fail: test() missing"
+			name:"error: test() missing"
 		}
 	]
 );
@@ -98,7 +109,7 @@ doh.register("Asynchronous tests.",
 			}
 		},
 		{
-			name:"fail: timeout",
+			name:"error: timeout",
 			timeout:100, // This timeout is shorter than the setTimeout below, this test should fail.
 			test:function(t){
 				setTimeout(function(){

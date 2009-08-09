@@ -29,6 +29,12 @@ doh = {
 	// which means only execute test2 if test1 succeeded.
 	_groups:[],
 	
+	_additionalGroupProperties:{
+		numTestsExecuted:0,
+		numFailures:0,
+		numErrors:0
+	},
+	
 	pause:function(){
 		this._isPaused = true;
 	},
@@ -51,9 +57,13 @@ doh = {
 			//t.test = doh.hitch(this, "_makeDeferred", [t.test]);
 			group.tests.push(t);
 		}
+		this._numTests += tests.length;
 	},
 	
 	run:function(){
+		if (this._current.group===null){
+			this.ui.started();
+		}
 		this._isPaused = false;
 		if (this._testInFlight){
 			return;
@@ -108,15 +118,18 @@ doh = {
 			if (c.groupIndex < this._groups.length-1){
 				c.groupIndex++;
 				c.group = this._groups[c.groupIndex];
+				doh.mixin(c.group, this._additionalGroupProperties);
+				this.ui.groupStarted(c.group);
 				c.testIndex = 0;
 			} else {
+				this.ui.report();
 				return false;
 			}
 		}
 		c.test = c.group.tests[c.testIndex];
 		return true;
 	},
-
+	
 	_runNextTest:function(){
 		// summary: Only called from internally after a test has finished.
 		if (this._isPaused){
@@ -135,7 +148,7 @@ doh = {
 		// 		automatically happens after the (asynchronous) test has "landed".
 		var g = this._current.group,
 			t = this._current.test;
-		this._testStarted(g, t);
+		this.ui.testStarted(g, t);
 		
 		// let doh reference "this.group.thinger..." which can be set by
 		// another test or group-level setUp function
@@ -152,15 +165,24 @@ doh = {
 		deferred.test = t;
 		
 		deferred.addErrback(function(err){
-			doh._handleFailure(g, t, err);
+			g.numFailures++;
+			doh._numFailures++;
+			doh.ui.testFailed(g, t, err);
 		});
 	
 		var retEnd = function(){
 			t.endTime = new Date();
+			g.numTestsExecuted++;
+			doh._numTestsExecuted++;
 			if(t.tearDown){
 				t.tearDown(assertWrapperObject);
 			}
-			doh._testEnd(g, t, deferred.results[0]);
+			doh.ui.testFinished(g, t, deferred.results[0]);
+			// Is this the last test in the current group?
+			var c = doh._current;
+			if (c.testIndex == c.group.tests.length-1){
+				doh.ui.groupFinished(g);
+			}
 		}
 	
 		var timer = setTimeout(function(){
@@ -168,6 +190,12 @@ doh = {
 		}, t.timeout || doh._defaultTimeout);
 	
 		deferred.addBoth(doh.hitch(this, function(arg){
+			// Copy over the result if an asynchronous test has writte a result.
+			// It must be available through the test object.
+// TODO maybe copy over all additional properties, compare to which props assertWrapperObject had upon creation and what new ones had been added, pass them all to t.*
+			if (assertWrapperObject.result){
+				t.result = assertWrapperObject.result;
+			}
 			clearTimeout(timer);
 			retEnd();
 			this._testInFlight = false;
@@ -176,43 +204,6 @@ doh = {
 		this._testInFlight = true;
 
 		t.startTime = new Date();
-		t.test(assertWrapperObject);
+		t.result = t.test(assertWrapperObject);
 	}
 }
-
-
-
-
-doh._testRegistered = function(group, fixture){
-	// slot to be filled in
-}
-
-doh._groupStarted = function(group){
-	// slot to be filled in
-}
-
-doh._groupFinished = function(group, success){
-	// slot to be filled in
-}
-
-doh._testStarted = function(group, fixture){
-	// slot to be filled in
-}
-
-doh._testFinished = function(group, fixture, success){
-	// slot to be filled in
-}
-
-
-
-
-
-
-doh._testEnd = function(g, t, result){
-	doh._currentTestCount++;
-	doh._testFinished(g, t, result);
-	if((!g.inFlight)&&(g.iterated)){
-		doh._groupFinished(group.name, !g.failures);
-	}
-}
-

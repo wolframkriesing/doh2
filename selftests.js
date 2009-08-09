@@ -62,7 +62,7 @@ doh.register("Other features.",
 			name:"success: pause after this test",
 			test:function(t){
 				t.assertTrue(true);
-				doh.pause();
+				//doh.pause();
 			}
 		},
 	]

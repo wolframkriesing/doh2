@@ -1,3 +1,5 @@
+// TODO write a test that verifies that the test run in the order as added.
+// Write tets for setUp and tearDown
 
 doh.register("Synchronously written tests.",
 	[
@@ -86,6 +88,7 @@ doh.register("Synchronously written tests.",
 	]
 );
 
+
 doh.register("Asynchronous tests.",
 	[
 		{
@@ -145,3 +148,63 @@ doh.register("Test doh.pause()",
 		},
 	]
 );
+
+// When writing a GUI for the tests it happens that you also want to show the
+// test cases that succeeded and maybe with what value, that is what the return
+// values are for.
+// E.g.
+//	test:function(){
+//		assertEqual(expectedGeoLocation, actualGeoLocation);
+//		return actualGeoLocation;
+//	}
+// Returning the actual value allows the doh.ui methods to show this value to the user.
+
+(function(){
+	var testObject = {
+		// We will check if this object has the return value set after the test.
+		name:"success: Simple return",
+		test:function(t){
+			t.assertTrue(true);
+			return "jojo";
+		}
+	};
+	doh.register("Return values",
+		[
+			testObject,
+			{
+				name:"success: Verify return value from last test",
+				test:function(t){
+					t.assertEqual(testObject.result, "jojo");
+				}
+			},
+		]
+	);
+})();
+
+// If the test contains asynch parts you can set the "result" property of the test explicitly instead
+// of returning a value, like so.
+(function(){
+	var testObject = {
+		// We will check if this object has the return value set after the test.
+		name:"success: Simple return",
+		test:function(t){
+			setTimeout(function(){
+				t.assertTrue(true);
+				t.result = "jaja";
+			}, 100);
+		}
+	};
+	doh.register("Return values in asynch test",
+		[
+			testObject,
+			{
+// Still fails :-(
+				name:"success: Verify result value from last test",
+				test:function(t){
+					t.assertEqual(testObject.result, "jaja");
+				}
+			},
+		]
+	);
+})();
+

@@ -29,6 +29,8 @@ Features doh2 added or fixed
 * doh.pause() can also be used inside a test to stop
   the test run from within a test
 * allow returning values, such as test results for the good case
+* namespaced all doh functionalities, and separated them into multiple files
+  doh, doh.assert, doh.util, doh.Deferred
 
 Examples
 --------

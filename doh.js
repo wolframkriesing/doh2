@@ -93,6 +93,16 @@ console.log('FIXXXXXME multiple asserts or timeout ... d.fired = ', d.fired, "GR
 					d.errback(e);
 				}
 			};
+			this.success = function(msg){
+				// This function can be used to directly make a test succeed.
+//TODO write selftest for it!!!!!!!!!
+				d.test.result = msg;
+				d.callback(msg);
+			};
+			this.failure = function(msg){
+//TODO write selftest for it!!!!!!!!!
+				d.errback(new doh.assert.Failure(msg));
+			};
 			var that = this;
 			for (var methodName in doh.assert){
 				if (methodName.indexOf("assert")===0){
@@ -212,6 +222,10 @@ console.log('FIXXXXXME multiple asserts or timeout ... d.fired = ', d.fired, "GR
 		this._testInFlight = true;
 
 		t.startTime = new Date();
-		t.result = t[this.config.testFunctionName](assertWrapperObject);
+		try{
+			t.result = t[this.config.testFunctionName](assertWrapperObject);
+		}catch(err){
+			deferred.errback(err);
+		}
 	}
 }

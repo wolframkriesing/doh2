@@ -309,4 +309,9 @@ doh.register("Multiple asserts",
 	]
 );
 
+write a test which tests that the test is aborted in the place where the first failure occurs, e.g.
+	assertTrue(false);
+	window = undefined; // this should NEVER be executed because the test function should be aborted above!!!!!!
+	assert(undefined, window);
+
 //*/

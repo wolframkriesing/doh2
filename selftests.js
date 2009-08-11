@@ -88,7 +88,6 @@ doh.register("Synchronously written tests.",
 	]
 );
 
-
 doh.register("Asynchronous tests.",
 	[
 		{
@@ -149,6 +148,35 @@ doh.register("Test doh.pause()",
 	]
 );
 
+//
+//	Test "config" parameter.
+//
+doh.register("Config parameter tests",
+	[
+		{
+			name:"success: 'testFunctionName'",
+			setUp:function(){
+				this._actualTestFunctionName = doh.config.testFunctionName;
+				doh.config.testFunctionName = "myTestFunctionName";
+			},
+			myTestFunctionName:function(t){
+				t.assertTrue(true);
+			},
+			tearDown:function(){
+				doh.config.testFunctionName = this._actualTestFunctionName;
+			}
+		},
+		{
+			name:"success: reset 'testFunctionName'",
+			test:function(t){
+				t.assertTrue(true);
+			}
+		}
+	]
+);
+
+
+
 // When writing a GUI for the tests it happens that you also want to show the
 // test cases that succeeded and maybe with what value, that is what the return
 // values are for.
@@ -179,7 +207,45 @@ doh.register("Test doh.pause()",
 			},
 		]
 	);
+	
+	// Test a bug that was in the tests, which didn't pass the value returned by a test
+	// to the doh.ui.testFinished() function, because that function was called BEFORE
+	// the returned value was set into the test data. A pretty tricky asynch
+	// problem. The following is the test to verify that it is fixed.
+	var resultValue = null,
+		oldTestFinished;
+	doh.register("Return value, asynch bug",
+		[
+			{
+				name:"success: Verify return value from last test",
+				setUp:function(){
+					// We have to override the testFinished() before we call assert()
+					// because with the bug assert() triggered the testFinished()
+					// before return was executed.
+					oldTestFinished = doh.ui.testFinished; // Backup the old testFinished().
+					doh.ui.testFinished = function(group, test){
+						resultValue = test.result;
+						oldTestFinished.apply(doh.ui, arguments);
+					}
+				},
+				test:function(t){
+					t.assertTrue(true);
+					return "EXPECT ME";
+				}
+			},
+			{
+				name:"success: Verify result from last test.",
+				setUp:function(){
+					doh.ui.testFinished = oldTestFinished;
+				},
+				test:function(t){
+					t.assertEqual("EXPECT ME", resultValue);
+				}
+			}
+		]
+	);
 })();
+
 
 // If the test contains asynch parts you can set the "result" property of the test explicitly instead
 // of returning a value, like so.
@@ -198,7 +264,6 @@ doh.register("Test doh.pause()",
 		[
 			testObject,
 			{
-// Still fails :-(
 				name:"success: Verify result value from last test",
 				test:function(t){
 					t.assertEqual(testObject.result, "jaja");
@@ -208,3 +273,40 @@ doh.register("Test doh.pause()",
 	);
 })();
 
+/*
+doh.register("Multiple asserts",
+	[
+		{
+			name:"success: some asserts",
+			test:function(t){
+				t.assertTrue(true);
+				t.assertEqual(1, 1);
+				t.assertError(new Error());
+			}
+		},
+		{
+			name:"fail: last assert fails",
+			test:function(t){
+				t.assertTrue(true);
+				t.assertEqual(1, 1);
+				t.assertError(new Error());
+				
+// FIXXXME multiple asserts dont work yet :(
+				t.assertTrue(false);
+			}
+		},
+		{
+			name:"fail: last assert fails",
+			timeout:12*1000,
+			test:function(t){
+				t.assertTrue(true);
+				setTimeout(function(){
+					t.numAsserts++;
+					t.assertTrue(false);
+				}, 10 * 1000);
+			}
+		},
+	]
+);
+
+//*/

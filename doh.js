@@ -65,9 +65,7 @@ doh = {
 		if (this._testInFlight){
 			return;
 		}
-		if (this._makeNextTestCurrent()){
-			this._runTest();
-		}
+		this._runNextTest();
 	},
 	
 	_getAssertWrapper:function(d){
@@ -112,7 +110,7 @@ console.log('FIXXXXXME multiple asserts or timeout ... d.fired = ', d.fired, "GR
 		return myT;
 	},
 	
-	_makeNextTestCurrent:function(){
+	_selectNextTest:function(){
 		var c = this._current;
 		// Is there a test left in this group?
 		if (c.group && c.testIndex < c.group.tests.length-1){
@@ -139,7 +137,7 @@ console.log('FIXXXXXME multiple asserts or timeout ... d.fired = ', d.fired, "GR
 		if (this._isPaused){
 			return;
 		}
-		if (this._makeNextTestCurrent()){
+		if (this._selectNextTest()){
 			this._runTest();
 		}
 	},

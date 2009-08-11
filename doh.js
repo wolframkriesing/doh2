@@ -82,9 +82,10 @@ doh = {
 		var myT = new function(){
 			this._assertClosure = function(method, args){
 				// If the Deferred instance is already "done", means callback or errback
-				// had already been called dont do it again.
+				// had already been called don't do it again.
 				// This might be the case when e.g. the test timed out.
 				if (d.fired > -1){
+console.log('FIXXXXXME multiple asserts or timeout ... d.fired = ', d.fired, "GROUP and TEST: '", d.test.group.name, "' " , d.test.name);
 					return;
 				}
 				try{
@@ -94,10 +95,16 @@ doh = {
 					d.errback(e);
 				}
 			};
+			var that = this;
 			for (var methodName in doh.assert){
 				if (methodName.indexOf("assert")===0){
 					this[methodName] = (function(methodName){return function(){
-						this._assertClosure(methodName, arguments);
+						// Make sure the current callstack is worked off before
+						// returning from any assert() method, we do this by
+						// setTimeout(). The bug was that assert() didn't make the
+						// test execute the return statement (if one was in there)
+						// before the test ended, this fixes it.
+						setTimeout(doh.util.hitch(that, "_assertClosure", methodName, arguments), 1);
 					}})(methodName);
 				}
 			}
@@ -155,8 +162,8 @@ doh = {
 		if(t.setUp){
 			t.setUp(assertWrapperObject);
 		}
-		if(!t.test){
-			t.test = function(){deferred.errback(new Error("Test missing."));}
+		if(!t[this.config.testFunctionName]){
+			t[this.config.testFunctionName] = function(){deferred.errback(new Error("Test missing."));}
 		}
 		deferred.groupName = g.name;
 		deferred.test = t;
@@ -207,6 +214,6 @@ doh = {
 		this._testInFlight = true;
 
 		t.startTime = new Date();
-		t.result = t.test(assertWrapperObject);
+		t.result = t[this.config.testFunctionName](assertWrapperObject);
 	}
 }

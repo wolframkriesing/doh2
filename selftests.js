@@ -1,6 +1,6 @@
 // TODO write a test that verifies that the test run in the order as added.
 // Write tets for setUp and tearDown
-
+//*
 doh.register("Synchronously written tests.",
 	[
 		//
@@ -272,6 +272,7 @@ doh.register("Config parameter tests",
 		]
 	);
 })();
+//*/
 
 /*
 doh.register("Multiple asserts",
@@ -315,3 +316,26 @@ write a test which tests that the test is aborted in the place where the first f
 	assert(undefined, window);
 
 //*/
+
+(function(){
+	doh.register("setUp()/tearDown() throw an error", [
+		{
+			name:"error: setUp() throws an error, test won't execute.",
+			setUp:function(){
+				throw new Error("Nasty error.");
+			},
+			test:function(t){
+				t.assertTrue(true);
+			}
+		},
+		{
+			name:"success: tearDown() throws an error ... not sure what to do",
+			test:function(t){
+				t.assertTrue(true);
+			},
+			tearDown:function(){
+				throw new Error("Nasty error.");
+			}
+		}
+	]);
+})();

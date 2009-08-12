@@ -166,9 +166,14 @@ console.log('FIXXXXXME multiple asserts or timeout ... d.fired = ', d.fired, "GR
 		// another test or group-level setUp function
 		t.group = g; 
 		var deferred = new doh.Deferred(),
-			assertWrapperObject = this._getAssertWrapper(deferred);
+			assertWrapperObject = this._getAssertWrapper(deferred),
+			setUpError = null;
 		if(t.setUp){
-			t.setUp(assertWrapperObject);
+			try{
+				t.setUp(assertWrapperObject);
+			}catch(setUpError){
+				deferred.errback(new Error('setUp() threw an error: ' + setUpError));
+			}
 		}
 		if(!t[this.config.testFunctionName]){
 			t[this.config.testFunctionName] = function(){deferred.errback(new Error("Test missing."));}
@@ -193,7 +198,11 @@ console.log('FIXXXXXME multiple asserts or timeout ... d.fired = ', d.fired, "GR
 			g.numTestsExecuted++;
 			doh._numTestsExecuted++;
 			if(t.tearDown){
-				t.tearDown(assertWrapperObject);
+				try{ // Catching tearDown() errors won't make the entire suite stall.
+					t.tearDown(assertWrapperObject);
+				}catch(tearDownError){
+// FIXXXME handle this case. But how? see TODO.txt for more comments.
+				}
 			}
 			doh.ui.testFinished(g, t, deferred.results[0]);
 			// Is this the last test in the current group?
@@ -221,11 +230,13 @@ console.log('FIXXXXXME multiple asserts or timeout ... d.fired = ', d.fired, "GR
 		});
 		this._testInFlight = true;
 
-		t.startTime = new Date();
-		try{
-			t.result = t[this.config.testFunctionName](assertWrapperObject);
-		}catch(err){
-			deferred.errback(err);
+		if (!setUpError){
+			t.startTime = new Date();
+			try{
+				t.result = t[this.config.testFunctionName](assertWrapperObject);
+			}catch(err){
+				deferred.errback(err);
+			}
 		}
 	}
 }
